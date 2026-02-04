@@ -30,7 +30,7 @@ jobs:
         run: |
           # مسح أي ملفات قديمة لضمان النظافة
           rm -rf * # إنشاء المشروع في المجلد الحالي
-          flutter create --platforms=android,web .
+          flutter create --platforms=android,web --project-name=aiteai_app .
           
       # --- بناء الويب ---
       - name: Build Web
