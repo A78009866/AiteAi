@@ -3,378 +3,567 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Aite.studio | Cloud Flutter IDE</title>
-    <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;700&family=Inter:wght@300;400;600&display=swap" rel="stylesheet">
+    <title>Aite.Studio | Glass Editor</title>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;500;700&family=JetBrains+Mono:wght@400;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     
     <style>
         :root {
-            --bg-dark: #1e1e1e;
-            --bg-sidebar: #252526;
-            --bg-activity: #333333;
-            --accent: #007acc;
-            --text-main: #cccccc;
-            --text-header: #ffffff;
-            --border: #3e3e42;
-            --hover: #2a2d2e;
+            --glass-bg: rgba(20, 20, 20, 0.75);
+            --glass-border: rgba(255, 255, 255, 0.1);
+            --accent: #00f2ff;
+            --accent-glow: rgba(0, 242, 255, 0.4);
+            --text-main: #ffffff;
+            --text-muted: #a0a0a0;
+            --danger: #ff4757;
+            --success: #2ed573;
         }
 
-        body { margin: 0; padding: 0; font-family: 'Inter', sans-serif; background: var(--bg-dark); color: var(--text-main); height: 100vh; overflow: hidden; display: flex; flex-direction: column; }
-        
-        /* Header */
-        header { height: 40px; background: #3c3c3c; display: flex; align-items: center; justify-content: space-between; padding: 0 15px; font-size: 13px; border-bottom: 1px solid #000; }
-        .brand { font-weight: 700; color: #fff; display: flex; align-items: center; gap: 8px; }
-        .brand i { color: var(--accent); }
-        .controls { display: flex; gap: 10px; }
-        
-        /* Layout */
-        #workspace { display: flex; flex: 1; height: calc(100vh - 40px); }
-        
-        /* Sidebar */
-        #sidebar { width: 300px; background: var(--bg-sidebar); border-right: 1px solid var(--border); display: flex; flex-direction: column; }
-        .section-title { padding: 10px 15px; font-size: 11px; font-weight: bold; text-transform: uppercase; letter-spacing: 1px; color: #bbb; display: flex; justify-content: space-between; align-items: center; }
-        .section-actions i { cursor: pointer; margin-left: 8px; font-size: 12px; }
-        .section-actions i:hover { color: #fff; }
+        body {
+            margin: 0;
+            padding: 0;
+            font-family: 'Outfit', sans-serif;
+            background: #000 url('https://images.unsplash.com/photo-1451187580459-43490279c0fa?q=80&w=2072&auto=format&fit=crop') no-repeat center center/cover;
+            color: var(--text-main);
+            height: 100vh;
+            overflow: hidden;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
 
-        /* Configuration Form */
-        #config-panel { padding: 15px; background: var(--bg-dark); border-bottom: 1px solid var(--border); }
-        input { width: 100%; box-sizing: border-box; background: #3c3c3c; border: 1px solid #3c3c3c; color: white; padding: 6px; margin-bottom: 8px; border-radius: 2px; outline: none; font-size: 12px; }
-        input:focus { border-color: var(--accent); }
+        /* طبقة تعتيم للخلفية */
+        body::before {
+            content: '';
+            position: absolute;
+            top: 0; left: 0; right: 0; bottom: 0;
+            background: rgba(0, 0, 0, 0.85);
+            z-index: -1;
+        }
+
+        /* الحاوية الرئيسية الزجاجية */
+        #app-container {
+            width: 95vw;
+            height: 92vh;
+            background: var(--glass-bg);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            border: 1px solid var(--glass-border);
+            border-radius: 16px;
+            box-shadow: 0 0 40px rgba(0,0,0,0.5);
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+        }
+
+        /* الهيدر */
+        header {
+            height: 60px;
+            border-bottom: 1px solid var(--glass-border);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 0 25px;
+        }
+
+        .brand {
+            font-size: 20px;
+            font-weight: 700;
+            letter-spacing: 1px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            color: var(--text-main);
+        }
+        .brand i { color: var(--accent); text-shadow: 0 0 10px var(--accent); }
+
+        /* الأزرار العلوية */
+        .top-actions { display: flex; gap: 12px; }
         
-        /* File Tree */
-        #file-explorer { flex: 1; overflow-y: auto; font-family: 'JetBrains Mono', monospace; font-size: 13px; }
-        .tree-item { padding: 4px 10px; cursor: pointer; white-space: nowrap; display: flex; align-items: center; gap: 6px; user-select: none; }
-        .tree-item:hover { background: var(--hover); }
-        .tree-item.active { background: #37373d; color: #fff; }
-        .tree-icon { width: 16px; text-align: center; }
-        .fa-folder { color: #dcb67a; }
-        .fa-file-code { color: #4fc1ff; }
-        .fa-file-image { color: #ce9178; }
-        .fa-chevron-right { font-size: 10px; transition: 0.2s; }
-        .rotate { transform: rotate(90deg); }
+        button {
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid var(--glass-border);
+            color: var(--text-main);
+            padding: 8px 16px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-family: 'Outfit', sans-serif;
+            font-weight: 500;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
 
-        /* Editor Area */
-        #editor-area { flex: 1; display: flex; flex-direction: column; background: var(--bg-dark); }
-        #tabs-bar { height: 35px; background: var(--bg-dark); display: flex; overflow-x: auto; border-bottom: 1px solid var(--bg-dark); }
-        .tab { background: #2d2d2d; padding: 0 15px; display: flex; align-items: center; gap: 8px; font-size: 13px; cursor: pointer; border-right: 1px solid #1e1e1e; color: #969696; min-width: 120px; }
-        .tab.active { background: #1e1e1e; color: #fff; border-top: 1px solid var(--accent); }
-        .tab-close { font-size: 12px; border-radius: 3px; padding: 2px; }
-        .tab-close:hover { background: #444; color: #fff; }
+        button:hover { background: rgba(255, 255, 255, 0.15); transform: translateY(-1px); }
         
-        #monaco-container { flex: 1; position: relative; }
+        button.primary {
+            background: rgba(0, 242, 255, 0.1);
+            border-color: var(--accent);
+            color: var(--accent);
+            box-shadow: 0 0 10px rgba(0, 242, 255, 0.1);
+        }
+        button.primary:hover { background: var(--accent); color: #000; box-shadow: 0 0 20px var(--accent-glow); }
 
-        /* Buttons & Status */
-        .btn { border: none; padding: 6px 12px; border-radius: 2px; cursor: pointer; font-size: 12px; font-family: inherit; display: flex; align-items: center; gap: 6px; transition: 0.2s; }
-        .btn-primary { background: var(--accent); color: white; }
-        .btn-primary:hover { background: #005f9e; }
-        .btn-success { background: #198754; color: white; }
-        .btn-danger { background: #c93c3c; color: white; }
-        .btn-secondary { background: #3c3c3c; color: #ccc; }
-        .btn-secondary:hover { background: #4b4b4b; }
+        button.danger { border-color: var(--danger); color: var(--danger); }
+        button.danger:hover { background: var(--danger); color: #fff; }
 
-        /* Loader */
-        #loader-overlay { position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.7); z-index: 1000; display: none; align-items: center; justify-content: center; flex-direction: column; }
-        .spinner { border: 3px solid #f3f3f3; border-top: 3px solid var(--accent); border-radius: 50%; width: 30px; height: 30px; animation: spin 1s linear infinite; margin-bottom: 10px; }
+        /* منطقة العمل */
+        #workspace {
+            display: flex;
+            flex: 1;
+            overflow: hidden;
+        }
+
+        /* القائمة الجانبية */
+        #sidebar {
+            width: 300px;
+            border-right: 1px solid var(--glass-border);
+            display: flex;
+            flex-direction: column;
+            background: rgba(0,0,0,0.2);
+        }
+
+        .config-box {
+            padding: 20px;
+            border-bottom: 1px solid var(--glass-border);
+        }
+        
+        .input-group { margin-bottom: 12px; position: relative; }
+        .input-group i { position: absolute; left: 12px; top: 50%; transform: translateY(-50%); color: var(--text-muted); font-size: 14px; }
+        
+        input {
+            width: 100%;
+            background: rgba(0, 0, 0, 0.4);
+            border: 1px solid var(--glass-border);
+            padding: 10px 10px 10px 35px; /* مسافة للأيقونة */
+            border-radius: 6px;
+            color: #fff;
+            outline: none;
+            box-sizing: border-box;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 12px;
+            transition: 0.3s;
+        }
+        input:focus { border-color: var(--accent); box-shadow: 0 0 8px var(--accent-glow); }
+
+        #file-tree {
+            flex: 1;
+            overflow-y: auto;
+            padding: 10px;
+        }
+
+        .file-node {
+            padding: 8px 12px;
+            border-radius: 6px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            font-size: 13px;
+            color: var(--text-muted);
+            transition: 0.2s;
+        }
+        .file-node:hover { background: rgba(255,255,255,0.05); color: #fff; }
+        .file-node.folder { color: #ffd700; font-weight: bold; }
+        .file-node.file { color: #a4d7ff; }
+
+        /* المحرر */
+        #editor-wrapper {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            background: rgba(0,0,0,0.3);
+            position: relative;
+        }
+
+        #monaco-editor { width: 100%; height: 100%; }
+
+        /* شاشة التحميل */
+        #overlay {
+            position: absolute; top: 0; left: 0; right: 0; bottom: 0;
+            background: rgba(0,0,0,0.8);
+            backdrop-filter: blur(5px);
+            z-index: 100;
+            display: none;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            color: var(--accent);
+        }
+        .loader {
+            width: 40px; height: 40px;
+            border: 3px solid transparent;
+            border-top: 3px solid var(--accent);
+            border-radius: 50%;
+            animation: spin 0.8s linear infinite;
+        }
         @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
 
-        /* Custom Scrollbar */
-        ::-webkit-scrollbar { width: 10px; height: 10px; }
-        ::-webkit-scrollbar-track { background: var(--bg-sidebar); }
-        ::-webkit-scrollbar-thumb { background: #424242; border-radius: 5px; border: 2px solid var(--bg-sidebar); }
-        ::-webkit-scrollbar-thumb:hover { background: #4f4f4f; }
+        /* رسائل الحالة */
+        .toast {
+            position: fixed; bottom: 20px; right: 20px;
+            background: var(--glass-bg);
+            border: 1px solid var(--glass-border);
+            padding: 12px 20px;
+            border-radius: 8px;
+            display: flex; align-items: center; gap: 10px;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.5);
+            transform: translateY(100px);
+            transition: 0.3s;
+            z-index: 2000;
+        }
+        .toast.show { transform: translateY(0); }
     </style>
 </head>
 <body>
 
-    <header>
-        <div class="brand">
-            <i class="fa-solid fa-layer-group"></i> Aite.studio
-        </div>
-        <div class="controls" id="project-controls" style="display:none;">
-            <span id="status-text" style="margin-right:15px; color: #888;">Ready</span>
-            <button class="btn btn-secondary" onclick="createNewFilePrompt()"><i class="fa-solid fa-file-circle-plus"></i> New File</button>
-            <button class="btn btn-danger" onclick="triggerBuild()"><i class="fa-solid fa-hammer"></i> Build & Deploy</button>
-            <button class="btn btn-primary" onclick="saveCurrentFile()"><i class="fa-regular fa-floppy-disk"></i> Save</button>
-            <a id="preview-btn" href="#" target="_blank" class="btn btn-success" style="text-decoration: none; display:none;"><i class="fa-solid fa-play"></i> Run Preview</a>
-        </div>
-    </header>
+    <div id="app-container">
+        <header>
+            <div class="brand"><i class="fa-solid fa-cube"></i> Aite.Studio</div>
+            <div class="top-actions" id="actions-panel" style="display:none;">
+                <button onclick="saveFile()"><i class="fa-solid fa-floppy-disk"></i> Save</button>
+                <button class="primary" onclick="triggerBuild()"><i class="fa-solid fa-bolt"></i> Build Update</button>
+                <a id="preview-link" href="#" target="_blank" style="text-decoration:none;">
+                    <button style="border-color: var(--success); color: var(--success);">
+                        <i class="fa-solid fa-eye"></i> Live Preview
+                    </button>
+                </a>
+            </div>
+        </header>
 
-    <div id="workspace">
-        <div id="sidebar">
-            <div id="config-panel">
-                <input type="text" id="repoOwner" placeholder="GitHub Username (e.g. A78009866)">
-                <input type="text" id="repoName" placeholder="Repository Name (e.g. AiteAi)">
-                <input type="password" id="token" placeholder="GitHub Personal Access Token">
-                <button class="btn btn-primary" onclick="loadProject()" style="width:100%; justify-content: center;">Connect to Repo</button>
-            </div>
-            
-            <div class="section-title">
-                <span>EXPLORER</span>
-                <div class="section-actions">
-                    <i class="fa-solid fa-rotate-right" title="Refresh" onclick="refreshTree()"></i>
-                </div>
-            </div>
-            <div id="file-explorer">
-                <div style="padding: 20px; text-align: center; color: #666; font-size: 12px;">
-                    Connect to a repository to start coding.
-                </div>
-            </div>
-        </div>
+        <div id="workspace">
+            <div id="sidebar">
+                <div class="config-box">
+                    <div style="margin-bottom:15px; font-size:12px; color:var(--text-muted); text-transform:uppercase; letter-spacing:1px;">Repo Config</div>
+                    
+                    <div class="input-group">
+                        <i class="fa-regular fa-user"></i>
+                        <input type="text" id="owner" placeholder="GitHub Username">
+                    </div>
+                    
+                    <div class="input-group">
+                        <i class="fa-solid fa-box-archive"></i>
+                        <input type="text" id="repo" placeholder="Repo Name (e.g. Salem)">
+                    </div>
+                    
+                    <div class="input-group">
+                        <i class="fa-solid fa-key"></i>
+                        <input type="password" id="token" placeholder="GitHub Token (Repo + Workflow)">
+                    </div>
 
-        <div id="editor-area">
-            <div id="tabs-bar">
+                    <button class="primary" onclick="connectRepo()" style="width:100%; justify-content:center; margin-top:10px;">
+                        Connect <i class="fa-solid fa-arrow-right"></i>
+                    </button>
+                    
+                    <button class="danger" onclick="initializeProject()" style="width:100%; justify-content:center; margin-top:10px; font-size: 11px;">
+                        <i class="fa-solid fa-wrench"></i> Initialize System (Fix 404)
+                    </button>
                 </div>
-            <div id="monaco-container"></div>
+
+                <div id="file-tree">
+                    <div style="text-align:center; padding:30px; color:var(--text-muted); font-size:13px;">
+                        Enter details to load project
+                    </div>
+                </div>
+            </div>
+
+            <div id="editor-wrapper">
+                <div id="monaco-editor"></div>
+            </div>
         </div>
     </div>
 
-    <div id="loader-overlay">
-        <div class="spinner"></div>
-        <div id="loader-msg" style="color:white; font-size:14px;">Processing...</div>
+    <div id="overlay">
+        <div class="loader"></div>
+        <p style="margin-top:15px; font-size:14px; letter-spacing:1px;" id="loading-text">CONNECTING...</p>
+    </div>
+
+    <div class="toast" id="toast">
+        <i class="fa-solid fa-circle-info" style="color:var(--accent)"></i>
+        <span id="toast-msg">Operation Successful</span>
     </div>
 
     <script src="https://cdnjs.cloudflare.com/ajax/libs/monaco-editor/0.45.0/min/vs/loader.js"></script>
 
     <script>
-        // --- 1. إعداد Monaco Editor ---
+        // --- محتوى ملف الـ Workflow (الحل السحري لخطأ 404) ---
+        const WORKFLOW_CONTENT = `name: Aite Studio Builder
+on:
+  workflow_dispatch:
+  push:
+    branches: [ main ]
+
+permissions:
+  contents: write
+  pages: write
+  id-token: write
+
+jobs:
+  build-deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-java@v4
+        with:
+          distribution: 'zulu'
+          java-version: '17'
+      - uses: subosito/flutter-action@v2
+        with:
+          channel: 'stable'
+      
+      - name: Init Project if Empty
+        run: |
+          if [ ! -f "pubspec.yaml" ]; then
+            flutter create --platforms=android,web --project-name=my_app .
+            git config --global user.name "AiteBot"
+            git config --global user.email "bot@aite.studio"
+            git add .
+            git commit -m "Init Project"
+            git push
+          fi
+
+      - run: flutter build web --release --base-href "/\${{ github.event.repository.name }}/"
+      
+      - uses: peaceiris/actions-gh-pages@v3
+        with:
+          github_token: \${{ secrets.GITHUB_TOKEN }}
+          publish_dir: ./build/web
+          force_orphan: true
+
+      - run: flutter build apk --release
+      
+      - uses: actions/upload-artifact@v4
+        with:
+          name: app-release
+          path: build/app/outputs/flutter-apk/app-release.apk
+`;
+
         let editor;
         let currentFile = { path: null, sha: null };
-        
+
+        // 1. تشغيل المحرر
         require.config({ paths: { 'vs': 'https://cdnjs.cloudflare.com/ajax/libs/monaco-editor/0.45.0/min/vs' }});
         require(['vs/editor/editor.main'], function() {
-            editor = monaco.editor.create(document.getElementById('monaco-container'), {
-                value: "// Select a file to edit\n",
+            editor = monaco.editor.create(document.getElementById('monaco-editor'), {
+                value: "// Welcome to Aite.Studio\n// Connect to a repo to start.",
                 language: 'dart',
-                theme: 'vs-dark',
+                theme: 'vs-dark', // سنقوم بتعديل الثيم ليناسب الزجاجي
                 automaticLayout: true,
-                fontSize: 14,
                 fontFamily: 'JetBrains Mono',
-                minimap: { enabled: true }
+                fontSize: 14,
+                minimap: { enabled: false }
             });
-
-            // اختصار Ctrl+S
-            editor.addCommand(monaco.KeyMod.CtrlCmd | monaco.KeyCode.KeyS, function() {
-                saveCurrentFile();
+            
+            // ثيم خاص أسود
+            monaco.editor.defineTheme('glass-dark', {
+                base: 'vs-dark',
+                inherit: true,
+                rules: [{ background: '1e1e1e' }],
+                colors: { 'editor.background': '#00000000' } // شفاف
             });
+            monaco.editor.setTheme('glass-dark');
         });
 
-        // --- 2. إدارة GitHub API ---
+        // 2. دوال مساعدة
+        function showLoading(msg) {
+            document.getElementById('loading-text').innerText = msg;
+            document.getElementById('overlay').style.display = 'flex';
+        }
+        function hideLoading() { document.getElementById('overlay').style.display = 'none'; }
         
-        // جلب الإعدادات
+        function showToast(msg, isError = false) {
+            const t = document.getElementById('toast');
+            document.getElementById('toast-msg').innerText = msg;
+            t.style.borderColor = isError ? 'var(--danger)' : 'var(--glass-border)';
+            t.querySelector('i').style.color = isError ? 'var(--danger)' : 'var(--accent)';
+            t.classList.add('show');
+            setTimeout(() => t.classList.remove('show'), 3000);
+        }
+
         function getAuth() {
             return {
-                owner: document.getElementById('repoOwner').value.trim(),
-                repo: document.getElementById('repoName').value.trim(),
+                owner: document.getElementById('owner').value.trim(),
+                repo: document.getElementById('repo').value.trim(),
                 token: document.getElementById('token').value.trim()
             };
         }
 
-        async function apiRequest(endpoint, method = 'GET', body = null) {
+        // 3. الاتصال بـ GitHub
+        async function api(endpoint, method='GET', body=null) {
             const { owner, repo, token } = getAuth();
-            if (!owner || !repo || !token) { alert("Please enter credentials"); return null; }
-
-            const loader = document.getElementById('loader-overlay');
-            if(method !== 'GET') loader.style.display = 'flex'; // إظهار التحميل فقط للعمليات الثقيلة
+            if(!owner || !repo || !token) { showToast("Missing Credentials!", true); return null; }
 
             try {
-                const opts = {
+                const res = await fetch(`https://api.github.com/repos/${owner}/${repo}${endpoint}`, {
                     method,
                     headers: {
                         'Authorization': `token ${token}`,
                         'Accept': 'application/vnd.github.v3+json',
                         'Content-Type': 'application/json'
-                    }
-                };
-                if (body) opts.body = JSON.stringify(body);
+                    },
+                    body: body ? JSON.stringify(body) : null
+                });
 
-                const res = await fetch(`https://api.github.com/repos/${owner}/${repo}${endpoint}`, opts);
-                
-                if(method !== 'GET') loader.style.display = 'none';
-
-                if (!res.ok) {
-                    const err = await res.json();
-                    throw new Error(err.message);
+                if(!res.ok) {
+                    if(res.status === 404) return '404'; // علامة خاصة
+                    throw new Error(`GitHub Error: ${res.status}`);
                 }
                 return method === 'GET' ? await res.json() : res;
             } catch (e) {
-                loader.style.display = 'none';
                 console.error(e);
-                alert("Error: " + e.message);
+                showToast(e.message, true);
                 return null;
             }
         }
 
-        // --- 3. إدارة المشروع والملفات ---
-
-        async function loadProject() {
+        // 4. حل مشكلة 404 وإنشاء المشروع
+        async function initializeProject() {
             const { owner, repo } = getAuth();
-            if (!owner) return;
-
-            document.getElementById('project-controls').style.display = 'flex';
-            document.getElementById('config-panel').style.display = 'none'; // إخفاء الإعدادات لتوفير المساحة
+            if(!confirm(`Will attempt to create/fix workflow in ${owner}/${repo}. Continue?`)) return;
             
-            // تحديث رابط المعاينة
-            const preview = document.getElementById('preview-btn');
-            preview.href = `https://${owner}.github.io/${repo}/`;
-            preview.style.display = 'flex';
-
-            await refreshTree();
-        }
-
-        async function refreshTree() {
-            // نستخدم Recursive Tree API للحصول على كل الملفات مرة واحدة (أسرع)
-            const branchData = await apiRequest(`/branches/main`);
-            if(!branchData) return;
+            showLoading("Injecting System Files...");
             
-            const treeSha = branchData.commit.commit.tree.sha;
-            const treeData = await apiRequest(`/git/trees/${treeSha}?recursive=1`);
+            // 1. تحويل محتوى الـ Workflow إلى Base64
+            const contentEncoded = btoa(WORKFLOW_CONTENT);
+            const path = ".github/workflows/flutter_ci.yml";
+
+            // 2. التحقق مما إذا كان الملف موجوداً لجلب الـ SHA (للتحديث) أو الإنشاء
+            const check = await api(`/contents/${path}`);
+            let sha = null;
+            if (check && check !== '404') sha = check.sha;
+
+            // 3. رفع الملف
+            const body = {
+                message: "Initialize Aite Studio System",
+                content: contentEncoded,
+                sha: sha // لو كان null سينشئ ملفاً جديداً
+            };
+
+            const res = await api(`/contents/${path}`, 'PUT', body);
             
-            if(treeData && treeData.tree) {
-                renderFileTree(treeData.tree);
+            hideLoading();
+            
+            if(res && res.ok) {
+                showToast("System Initialized! You can now Build.");
+                // تشغيل البناء فوراً لإنشاء ملفات فلاتر
+                triggerBuild();
+            } else {
+                showToast("Failed to init. Check Token Permissions.", true);
             }
         }
 
-        function renderFileTree(items) {
-            const container = document.getElementById('file-explorer');
-            container.innerHTML = '';
+        // 5. الاتصال العادي وعرض الملفات
+        async function connectRepo() {
+            showLoading("Fetching Repo...");
+            const files = await api('/contents/'); // الجذر
+            hideLoading();
+
+            if(files === '404') {
+                showToast("Repo not found OR Empty.", true);
+                return;
+            }
             
-            // ترتيب: المجلدات ثم الملفات
-            items.sort((a, b) => {
-                if (a.type === b.type) return a.path.localeCompare(b.path);
-                return a.type === 'tree' ? -1 : 1;
-            });
+            if(files) {
+                document.getElementById('actions-panel').style.display = 'flex';
+                // تحديث رابط المعاينة
+                const { owner, repo } = getAuth();
+                document.getElementById('preview-link').href = `https://${owner}.github.io/${repo}/`;
+                renderTree(files);
+            }
+        }
+
+        function renderTree(items) {
+            const tree = document.getElementById('file-tree');
+            tree.innerHTML = '';
+            
+            // فرز: مجلدات ثم ملفات
+            items.sort((a,b) => (a.type === b.type ? 0 : a.type === 'dir' ? -1 : 1));
 
             items.forEach(item => {
-                if (item.type !== 'blob' && item.type !== 'tree') return; // تجاهل الروابط الفرعية
+                const div = document.createElement('div');
+                div.className = `file-node ${item.type === 'dir' ? 'folder' : 'file'}`;
+                const icon = item.type === 'dir' ? 'fa-folder' : 'fa-file-code';
+                div.innerHTML = `<i class="fa-solid ${icon}"></i> ${item.name}`;
                 
-                const el = document.createElement('div');
-                el.className = 'tree-item';
-                // مسافة بادئة بناءً على العمق
-                const depth = item.path.split('/').length - 1;
-                el.style.paddingLeft = `${10 + (depth * 15)}px`;
-
-                const icon = item.type === 'tree' ? 'fa-folder' : getFileIcon(item.path);
-                
-                el.innerHTML = `
-                    <div class="tree-icon"><i class="fa-solid ${icon}"></i></div>
-                    <span>${item.path.split('/').pop()}</span>
-                `;
-
-                el.onclick = () => {
-                    if (item.type === 'blob') openFile(item.path);
+                div.onclick = () => {
+                    if(item.type === 'dir') loadSubDir(item.path);
+                    else openFile(item.path);
                 };
-
-                container.appendChild(el);
+                tree.appendChild(div);
             });
         }
 
-        function getFileIcon(filename) {
-            if (filename.endsWith('.dart')) return 'fa-file-code';
-            if (filename.endsWith('.yaml')) return 'fa-file-lines';
-            if (filename.endsWith('.html')) return 'fa-html5';
-            if (filename.endsWith('.json')) return 'fa-file-code';
-            if (filename.endsWith('.png')) return 'fa-file-image';
-            return 'fa-file';
+        async function loadSubDir(path) {
+            showLoading("Opening Dir...");
+            const items = await api(`/contents/${path}`);
+            hideLoading();
+            if(items && items !== '404') renderTree(items);
         }
 
-        // --- 4. فتح وحفظ الملفات ---
-
+        // 6. فتح الملف
         async function openFile(path) {
-            document.getElementById('loader-msg').innerText = "Loading File...";
-            document.getElementById('loader-overlay').style.display = 'flex';
+            showLoading("Reading File...");
+            const data = await api(`/contents/${path}`);
+            hideLoading();
 
-            const data = await apiRequest(`/contents/${path}`);
-            document.getElementById('loader-overlay').style.display = 'none';
-            
-            if (!data) return;
-
-            // فك التشفير مع دعم UTF-8
-            const content = new TextDecoder().decode(Uint8Array.from(atob(data.content), c => c.charCodeAt(0)));
-            
-            // تحديد اللغة
-            let lang = 'plaintext';
-            if (path.endsWith('.dart')) lang = 'dart';
-            if (path.endsWith('.yaml')) lang = 'yaml';
-            if (path.endsWith('.json')) lang = 'json';
-            if (path.endsWith('.html')) lang = 'html';
-
-            monaco.editor.setModelLanguage(editor.getModel(), lang);
-            editor.setValue(content);
-            
-            currentFile = { path: path, sha: data.sha };
-            updateTabs(path);
-            document.getElementById('status-text').innerText = `Editing: ${path}`;
+            if(data && data.content) {
+                const content = new TextDecoder().decode(Uint8Array.from(atob(data.content), c => c.charCodeAt(0)));
+                editor.setValue(content);
+                currentFile = { path, sha: data.sha };
+                
+                // تحديد اللغة
+                if(path.endsWith('.dart')) monaco.editor.setModelLanguage(editor.getModel(), 'dart');
+                else if(path.endsWith('.yaml')) monaco.editor.setModelLanguage(editor.getModel(), 'yaml');
+                
+                showToast(`Opened: ${path}`);
+            }
         }
 
-        function updateTabs(path) {
-            const tabs = document.getElementById('tabs-bar');
-            tabs.innerHTML = `
-                <div class="tab active">
-                    <i class="fa-solid ${getFileIcon(path)}"></i>
-                    <span>${path.split('/').pop()}</span>
-                    <i class="fa-solid fa-xmark tab-close"></i>
-                </div>
-            `;
-        }
-
-        async function saveCurrentFile() {
-            if (!currentFile.path) return alert("No file open!");
-
+        // 7. حفظ الملف
+        async function saveFile() {
+            if(!currentFile.path) return showToast("No file open!", true);
+            
+            showLoading("Saving...");
             const content = editor.getValue();
-            // تشفير
             const encoded = btoa(new TextEncoder().encode(content).reduce((data, byte) => data + String.fromCharCode(byte), ''));
-
+            
             const body = {
-                message: `Update ${currentFile.path} via Aite.studio`,
+                message: `Update ${currentFile.path} via Aite`,
                 content: encoded,
                 sha: currentFile.sha
             };
 
-            const res = await apiRequest(`/contents/${currentFile.path}`, 'PUT', body);
-            if (res) {
+            const res = await api(`/contents/${currentFile.path}`, 'PUT', body);
+            hideLoading();
+
+            if(res && res.ok) {
                 const json = await res.json();
                 currentFile.sha = json.content.sha;
-                // وميض تأكيد الحفظ
-                const btn = document.querySelector('.btn-primary');
-                const originalText = btn.innerHTML;
-                btn.innerHTML = '<i class="fa-solid fa-check"></i> Saved';
-                setTimeout(() => btn.innerHTML = originalText, 2000);
+                showToast("File Saved Successfully!");
+            } else {
+                showToast("Save Failed!", true);
             }
         }
 
-        // --- 5. إنشاء ملف جديد ---
-        async function createNewFilePrompt() {
-            const fileName = prompt("Enter file path (e.g. lib/new_screen.dart):");
-            if(!fileName) return;
-
-            const content = "// New File";
-            const encoded = btoa(content);
-            
-            const body = {
-                message: `Create ${fileName}`,
-                content: encoded
-            };
-
-            const res = await apiRequest(`/contents/${fileName}`, 'PUT', body);
-            if(res) {
-                await refreshTree(); // تحديث القائمة
-                openFile(fileName); // فتح الملف فوراً
-            }
-        }
-
-        // --- 6. عملية البناء ---
+        // 8. تشغيل البناء
         async function triggerBuild() {
-            const confirmBuild = confirm("Trigger new build? This will verify project files and build Web/Android versions.");
-            if(!confirmBuild) return;
-
-            // اسم ملف الـ workflow يجب أن يطابق الموجود في الريبو
-            const workflowFile = 'flutter_ci.yml'; // تأكد من تسمية الملف في الريبو بهذا الاسم
+            const { owner, repo } = getAuth();
+            showLoading("Triggering Build...");
             
+            // نحاول تشغيل الـ Workflow
             const body = { ref: 'main' };
-            const res = await apiRequest(`/actions/workflows/${workflowFile}/dispatches`, 'POST', body);
+            const res = await api(`/actions/workflows/flutter_ci.yml/dispatches`, 'POST', body);
             
+            hideLoading();
+
             if(res && res.ok) {
-                alert("🚀 Build Started! Changes will appear in a few minutes.\nCheck the Actions tab in GitHub for details.");
+                showToast("Build Started! Check GitHub Actions tab.");
+            } else if (res === '404') {
+                // إذا فشل بـ 404، نقترح الإصلاح
+                alert("Error: Workflow file not found in repo!\nPlease click 'Initialize System' in the sidebar first.");
+            } else {
+                showToast("Build Failed to start.", true);
             }
         }
 
