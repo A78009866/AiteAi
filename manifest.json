@@ -1,6 +1,6 @@
 {
-    "name": "aiteai_app",
-    "short_name": "aiteai_app",
+    "name": "aite_app",
+    "short_name": "aite_app",
     "start_url": ".",
     "display": "standalone",
     "background_color": "#0175C2",
