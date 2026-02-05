@@ -1,17 +1,20 @@
-name: Auto Create & Deploy Flutter
+name: Aite Studio Builder
 
-# هذا التريجر يسمح لك بتشغيل البناء يدوياً بضغطة زر
 on:
-  workflow_dispatch:
+  workflow_dispatch: # تشغيل يدوي من الزر في المحرر
+  push:
+    branches: [ main ]
 
 permissions:
   contents: write
+  pages: write
+  id-token: write
 
 jobs:
-  generate-and-deploy:
+  build-and-deploy:
     runs-on: ubuntu-latest
     steps:
-      - name: Checkout Repo
+      - name: Checkout Code
         uses: actions/checkout@v4
 
       - name: Setup Java
@@ -25,32 +28,44 @@ jobs:
         with:
           channel: 'stable'
 
-      # هذه الخطوة تنشئ مشروع فلاتر جديد من العدم داخل السيرفر
-      - name: Create New Flutter Project
+      # التحقق مما إذا كان المشروع موجوداً
+      - name: Check & Init Project
+        id: init
         run: |
-          # مسح أي ملفات قديمة لضمان النظافة
-          rm -rf * # إنشاء المشروع في المجلد الحالي
-          flutter create --platforms=android,web --project-name=aiteai_app .
-          
-      # --- بناء الويب ---
+          if [ ! -f "pubspec.yaml" ]; then
+            echo "No project found. Creating new Flutter project..."
+            flutter create --platforms=android,web --project-name=aite_app .
+            
+            # إعداد هوية جيت للرفع
+            git config --global user.name "Aite Studio Bot"
+            git config --global user.email "bot@aite.studio"
+            
+            # إضافة الملفات ورفعها للمستودع حتى تظهر في المحرر لديك
+            git add .
+            git commit -m "Initialize Flutter Project by Aite.studio"
+            git push
+          else
+            echo "Project found. Proceeding to build..."
+          fi
+
+      # بناء نسخة الويب
       - name: Build Web
         run: flutter build web --release --base-href "/${{ github.event.repository.name }}/"
 
-      # نشر الويب ليعطيك الرابط
-      - name: Deploy to GitHub Pages
+      # نشر الويب
+      - name: Deploy Web to GitHub Pages
         uses: peaceiris/actions-gh-pages@v3
         with:
           github_token: ${{ secrets.GITHUB_TOKEN }}
           publish_dir: ./build/web
-          force_orphan: true # يجبر النشر حتى لو لم يكن هناك تاريخ سابق
 
-      # --- بناء الأندرويد ---
+      # بناء نسخة الأندرويد
       - name: Build Android APK
         run: flutter build apk --release
 
-      # رفع ملف الـ APK لك لتحميله
-      - name: Upload APK
+      # رفع APK للتحميل
+      - name: Upload APK Artifact
         uses: actions/upload-artifact@v4
         with:
-          name: fresh-app-release
+          name: app-release
           path: build/app/outputs/flutter-apk/app-release.apk
