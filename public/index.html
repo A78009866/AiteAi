@@ -3,224 +3,381 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Flutter Project Commander</title>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/ace/1.32.3/ace.js"></script>
+    <title>Aite.studio | Cloud Flutter IDE</title>
+    <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;700&family=Inter:wght@300;400;600&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
     <style>
-        :root { --bg: #1e1e1e; --sidebar: #252526; --accent: #007acc; --text: #d4d4d4; }
-        body { margin: 0; font-family: 'Segoe UI', sans-serif; background: var(--bg); color: var(--text); display: flex; height: 100vh; overflow: hidden; }
+        :root {
+            --bg-dark: #1e1e1e;
+            --bg-sidebar: #252526;
+            --bg-activity: #333333;
+            --accent: #007acc;
+            --text-main: #cccccc;
+            --text-header: #ffffff;
+            --border: #3e3e42;
+            --hover: #2a2d2e;
+        }
+
+        body { margin: 0; padding: 0; font-family: 'Inter', sans-serif; background: var(--bg-dark); color: var(--text-main); height: 100vh; overflow: hidden; display: flex; flex-direction: column; }
         
-        /* الشريط الجانبي */
-        #sidebar { width: 250px; background: var(--sidebar); border-right: 1px solid #333; display: flex; flex-direction: column; }
-        .config-box { padding: 15px; background: #2d2d2d; border-bottom: 1px solid #333; }
-        .config-box input { width: 90%; background: #3c3c3c; border: 1px solid #555; color: white; padding: 5px; margin-bottom: 5px; border-radius: 3px; }
-        .file-tree { flex: 1; overflow-y: auto; padding: 10px; }
-        .file-item { cursor: pointer; padding: 4px 8px; font-size: 14px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-        .file-item:hover { background: #37373d; }
-        .file-item.folder { color: #dcb67a; font-weight: bold; }
-        .file-item.file { color: #9cdcfe; }
+        /* Header */
+        header { height: 40px; background: #3c3c3c; display: flex; align-items: center; justify-content: space-between; padding: 0 15px; font-size: 13px; border-bottom: 1px solid #000; }
+        .brand { font-weight: 700; color: #fff; display: flex; align-items: center; gap: 8px; }
+        .brand i { color: var(--accent); }
+        .controls { display: flex; gap: 10px; }
+        
+        /* Layout */
+        #workspace { display: flex; flex: 1; height: calc(100vh - 40px); }
+        
+        /* Sidebar */
+        #sidebar { width: 300px; background: var(--bg-sidebar); border-right: 1px solid var(--border); display: flex; flex-direction: column; }
+        .section-title { padding: 10px 15px; font-size: 11px; font-weight: bold; text-transform: uppercase; letter-spacing: 1px; color: #bbb; display: flex; justify-content: space-between; align-items: center; }
+        .section-actions i { cursor: pointer; margin-left: 8px; font-size: 12px; }
+        .section-actions i:hover { color: #fff; }
 
-        /* منطقة المحرر */
-        #main { flex: 1; display: flex; flex-direction: column; }
-        #toolbar { height: 50px; background: var(--sidebar); border-bottom: 1px solid #333; display: flex; align-items: center; padding: 0 15px; gap: 10px; }
-        #editor-container { flex: 1; position: relative; }
-        #editor { position: absolute; top: 0; right: 0; bottom: 0; left: 0; }
+        /* Configuration Form */
+        #config-panel { padding: 15px; background: var(--bg-dark); border-bottom: 1px solid var(--border); }
+        input { width: 100%; box-sizing: border-box; background: #3c3c3c; border: 1px solid #3c3c3c; color: white; padding: 6px; margin-bottom: 8px; border-radius: 2px; outline: none; font-size: 12px; }
+        input:focus { border-color: var(--accent); }
+        
+        /* File Tree */
+        #file-explorer { flex: 1; overflow-y: auto; font-family: 'JetBrains Mono', monospace; font-size: 13px; }
+        .tree-item { padding: 4px 10px; cursor: pointer; white-space: nowrap; display: flex; align-items: center; gap: 6px; user-select: none; }
+        .tree-item:hover { background: var(--hover); }
+        .tree-item.active { background: #37373d; color: #fff; }
+        .tree-icon { width: 16px; text-align: center; }
+        .fa-folder { color: #dcb67a; }
+        .fa-file-code { color: #4fc1ff; }
+        .fa-file-image { color: #ce9178; }
+        .fa-chevron-right { font-size: 10px; transition: 0.2s; }
+        .rotate { transform: rotate(90deg); }
 
-        /* الأزرار */
-        button { background: #3c3c3c; color: white; border: 1px solid #555; padding: 6px 12px; cursor: pointer; border-radius: 3px; transition: 0.2s; }
-        button:hover { background: #505050; }
-        button.primary { background: var(--accent); border-color: var(--accent); }
-        button.primary:hover { background: #0062a3; }
-        button.danger { background: #a32828; border-color: #851e1e; }
+        /* Editor Area */
+        #editor-area { flex: 1; display: flex; flex-direction: column; background: var(--bg-dark); }
+        #tabs-bar { height: 35px; background: var(--bg-dark); display: flex; overflow-x: auto; border-bottom: 1px solid var(--bg-dark); }
+        .tab { background: #2d2d2d; padding: 0 15px; display: flex; align-items: center; gap: 8px; font-size: 13px; cursor: pointer; border-right: 1px solid #1e1e1e; color: #969696; min-width: 120px; }
+        .tab.active { background: #1e1e1e; color: #fff; border-top: 1px solid var(--accent); }
+        .tab-close { font-size: 12px; border-radius: 3px; padding: 2px; }
+        .tab-close:hover { background: #444; color: #fff; }
+        
+        #monaco-container { flex: 1; position: relative; }
 
-        /* الرسائل */
-        #status { margin-left: auto; font-size: 13px; color: #888; }
-        .loader { display: none; width: 16px; height: 16px; border: 2px solid #fff; border-top: 2px solid transparent; border-radius: 50%; animation: spin 1s linear infinite; }
+        /* Buttons & Status */
+        .btn { border: none; padding: 6px 12px; border-radius: 2px; cursor: pointer; font-size: 12px; font-family: inherit; display: flex; align-items: center; gap: 6px; transition: 0.2s; }
+        .btn-primary { background: var(--accent); color: white; }
+        .btn-primary:hover { background: #005f9e; }
+        .btn-success { background: #198754; color: white; }
+        .btn-danger { background: #c93c3c; color: white; }
+        .btn-secondary { background: #3c3c3c; color: #ccc; }
+        .btn-secondary:hover { background: #4b4b4b; }
+
+        /* Loader */
+        #loader-overlay { position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.7); z-index: 1000; display: none; align-items: center; justify-content: center; flex-direction: column; }
+        .spinner { border: 3px solid #f3f3f3; border-top: 3px solid var(--accent); border-radius: 50%; width: 30px; height: 30px; animation: spin 1s linear infinite; margin-bottom: 10px; }
         @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+
+        /* Custom Scrollbar */
+        ::-webkit-scrollbar { width: 10px; height: 10px; }
+        ::-webkit-scrollbar-track { background: var(--bg-sidebar); }
+        ::-webkit-scrollbar-thumb { background: #424242; border-radius: 5px; border: 2px solid var(--bg-sidebar); }
+        ::-webkit-scrollbar-thumb:hover { background: #4f4f4f; }
     </style>
 </head>
 <body>
 
-    <div id="sidebar">
-        <div class="config-box">
-            <small>GitHub Configuration</small>
-            <input type="text" id="repoOwner" placeholder="Username (e.g. A78009866)">
-            <input type="text" id="repoName" placeholder="Repo Name (e.g. AiteAi)">
-            <input type="password" id="token" placeholder="GitHub Personal Token">
-            <button onclick="loadRepo()" style="width:100%">📂 Load Project</button>
+    <header>
+        <div class="brand">
+            <i class="fa-solid fa-layer-group"></i> Aite.studio
         </div>
-        <div class="file-tree" id="fileTree">
-            <div style="text-align:center; margin-top:20px; color:#666;">Load a repo to start</div>
+        <div class="controls" id="project-controls" style="display:none;">
+            <span id="status-text" style="margin-right:15px; color: #888;">Ready</span>
+            <button class="btn btn-secondary" onclick="createNewFilePrompt()"><i class="fa-solid fa-file-circle-plus"></i> New File</button>
+            <button class="btn btn-danger" onclick="triggerBuild()"><i class="fa-solid fa-hammer"></i> Build & Deploy</button>
+            <button class="btn btn-primary" onclick="saveCurrentFile()"><i class="fa-regular fa-floppy-disk"></i> Save</button>
+            <a id="preview-btn" href="#" target="_blank" class="btn btn-success" style="text-decoration: none; display:none;"><i class="fa-solid fa-play"></i> Run Preview</a>
+        </div>
+    </header>
+
+    <div id="workspace">
+        <div id="sidebar">
+            <div id="config-panel">
+                <input type="text" id="repoOwner" placeholder="GitHub Username (e.g. A78009866)">
+                <input type="text" id="repoName" placeholder="Repository Name (e.g. AiteAi)">
+                <input type="password" id="token" placeholder="GitHub Personal Access Token">
+                <button class="btn btn-primary" onclick="loadProject()" style="width:100%; justify-content: center;">Connect to Repo</button>
+            </div>
+            
+            <div class="section-title">
+                <span>EXPLORER</span>
+                <div class="section-actions">
+                    <i class="fa-solid fa-rotate-right" title="Refresh" onclick="refreshTree()"></i>
+                </div>
+            </div>
+            <div id="file-explorer">
+                <div style="padding: 20px; text-align: center; color: #666; font-size: 12px;">
+                    Connect to a repository to start coding.
+                </div>
+            </div>
+        </div>
+
+        <div id="editor-area">
+            <div id="tabs-bar">
+                </div>
+            <div id="monaco-container"></div>
         </div>
     </div>
 
-    <div id="main">
-        <div id="toolbar">
-            <button class="danger" onclick="createNewProject()">⚡ Create New Flutter Project</button>
-            <button class="primary" onclick="saveCurrentFile()">💾 Save Changes</button>
-            <button onclick="triggerBuild()">🔨 Rebuild Web/APK</button>
-            <button onclick="downloadZip()">📦 Download ZIP</button>
-            <a id="previewLink" href="#" target="_blank" style="display:none; margin-left:10px; color:#4caf50; text-decoration:none;">🌐 Open Preview</a>
-            <div id="status">Ready</div>
-            <div class="loader" id="loader"></div>
-        </div>
-        <div id="editor-container">
-            <div id="editor"></div>
-        </div>
+    <div id="loader-overlay">
+        <div class="spinner"></div>
+        <div id="loader-msg" style="color:white; font-size:14px;">Processing...</div>
     </div>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/monaco-editor/0.45.0/min/vs/loader.js"></script>
 
     <script>
-        // إعداد المحرر
-        const editor = ace.edit("editor");
-        editor.setTheme("ace/theme/monokai");
-        editor.session.setMode("ace/mode/dart");
-        editor.setFontSize(14);
+        // --- 1. إعداد Monaco Editor ---
+        let editor;
+        let currentFile = { path: null, sha: null };
+        
+        require.config({ paths: { 'vs': 'https://cdnjs.cloudflare.com/ajax/libs/monaco-editor/0.45.0/min/vs' }});
+        require(['vs/editor/editor.main'], function() {
+            editor = monaco.editor.create(document.getElementById('monaco-container'), {
+                value: "// Select a file to edit\n",
+                language: 'dart',
+                theme: 'vs-dark',
+                automaticLayout: true,
+                fontSize: 14,
+                fontFamily: 'JetBrains Mono',
+                minimap: { enabled: true }
+            });
 
-        let currentFileSha = null;
-        let currentFilePath = null;
+            // اختصار Ctrl+S
+            editor.addCommand(monaco.KeyMod.CtrlCmd | monaco.KeyCode.KeyS, function() {
+                saveCurrentFile();
+            });
+        });
 
-        // دالة مساعدة للاتصال بـ API
-        async function githubAPI(endpoint, method = 'GET', body = null) {
-            const owner = document.getElementById('repoOwner').value;
-            const repo = document.getElementById('repoName').value;
-            const token = document.getElementById('token').value;
-            
-            if (!owner || !repo || !token) {
-                alert("Please fill in Username, Repo Name, and Token!");
-                return null;
-            }
-
-            document.getElementById('status').innerText = "Processing...";
-            document.getElementById('loader').style.display = "block";
-
-            const url = `https://api.github.com/repos/${owner}/${repo}${endpoint}`;
-            const headers = {
-                'Authorization': `token ${token}`,
-                'Accept': 'application/vnd.github.v3+json'
+        // --- 2. إدارة GitHub API ---
+        
+        // جلب الإعدادات
+        function getAuth() {
+            return {
+                owner: document.getElementById('repoOwner').value.trim(),
+                repo: document.getElementById('repoName').value.trim(),
+                token: document.getElementById('token').value.trim()
             };
+        }
+
+        async function apiRequest(endpoint, method = 'GET', body = null) {
+            const { owner, repo, token } = getAuth();
+            if (!owner || !repo || !token) { alert("Please enter credentials"); return null; }
+
+            const loader = document.getElementById('loader-overlay');
+            if(method !== 'GET') loader.style.display = 'flex'; // إظهار التحميل فقط للعمليات الثقيلة
 
             try {
-                const options = { method, headers };
-                if (body) options.body = JSON.stringify(body);
-                const response = await fetch(url, options);
+                const opts = {
+                    method,
+                    headers: {
+                        'Authorization': `token ${token}`,
+                        'Accept': 'application/vnd.github.v3+json',
+                        'Content-Type': 'application/json'
+                    }
+                };
+                if (body) opts.body = JSON.stringify(body);
+
+                const res = await fetch(`https://api.github.com/repos/${owner}/${repo}${endpoint}`, opts);
                 
-                document.getElementById('status').innerText = "Ready";
-                document.getElementById('loader').style.display = "none";
-                
-                if (!response.ok) throw new Error(`Error: ${response.statusText}`);
-                return method === 'GET' ? await response.json() : response;
-            } catch (error) {
-                alert(error.message);
-                document.getElementById('status').innerText = "Error";
-                document.getElementById('loader').style.display = "none";
+                if(method !== 'GET') loader.style.display = 'none';
+
+                if (!res.ok) {
+                    const err = await res.json();
+                    throw new Error(err.message);
+                }
+                return method === 'GET' ? await res.json() : res;
+            } catch (e) {
+                loader.style.display = 'none';
+                console.error(e);
+                alert("Error: " + e.message);
                 return null;
             }
         }
 
-        // 1. تحميل قائمة الملفات
-        async function loadRepo(path = '') {
-            const data = await githubAPI(`/contents/${path}`);
-            if (!data) return;
+        // --- 3. إدارة المشروع والملفات ---
 
-            const tree = document.getElementById('fileTree');
-            if (path === '') {
-                tree.innerHTML = ''; // تنظيف القائمة إذا كان الجذر
-                // تحديث رابط المعاينة
-                const owner = document.getElementById('repoOwner').value;
-                const repo = document.getElementById('repoName').value;
-                const link = document.getElementById('previewLink');
-                link.href = `https://${owner}.github.io/${repo}/`;
-                link.style.display = 'inline-block';
+        async function loadProject() {
+            const { owner, repo } = getAuth();
+            if (!owner) return;
+
+            document.getElementById('project-controls').style.display = 'flex';
+            document.getElementById('config-panel').style.display = 'none'; // إخفاء الإعدادات لتوفير المساحة
+            
+            // تحديث رابط المعاينة
+            const preview = document.getElementById('preview-btn');
+            preview.href = `https://${owner}.github.io/${repo}/`;
+            preview.style.display = 'flex';
+
+            await refreshTree();
+        }
+
+        async function refreshTree() {
+            // نستخدم Recursive Tree API للحصول على كل الملفات مرة واحدة (أسرع)
+            const branchData = await apiRequest(`/branches/main`);
+            if(!branchData) return;
+            
+            const treeSha = branchData.commit.commit.tree.sha;
+            const treeData = await apiRequest(`/git/trees/${treeSha}?recursive=1`);
+            
+            if(treeData && treeData.tree) {
+                renderFileTree(treeData.tree);
             }
+        }
 
-            // ترتيب المجلدات أولاً ثم الملفات
-            data.sort((a, b) => (a.type === b.type ? 0 : a.type === 'dir' ? -1 : 1));
+        function renderFileTree(items) {
+            const container = document.getElementById('file-explorer');
+            container.innerHTML = '';
+            
+            // ترتيب: المجلدات ثم الملفات
+            items.sort((a, b) => {
+                if (a.type === b.type) return a.path.localeCompare(b.path);
+                return a.type === 'tree' ? -1 : 1;
+            });
 
-            data.forEach(item => {
-                const div = document.createElement('div');
-                div.className = `file-item ${item.type === 'dir' ? 'folder' : 'file'}`;
-                div.innerText = (item.type === 'dir' ? '📁 ' : '📄 ') + item.name;
+            items.forEach(item => {
+                if (item.type !== 'blob' && item.type !== 'tree') return; // تجاهل الروابط الفرعية
                 
-                if (item.type === 'dir') {
-                    div.onclick = () => loadRepo(item.path); // تحميل المجلد الفرعي (تبسيط للعرض)
-                } else {
-                    div.onclick = () => openFile(item.path);
-                }
-                tree.appendChild(div);
+                const el = document.createElement('div');
+                el.className = 'tree-item';
+                // مسافة بادئة بناءً على العمق
+                const depth = item.path.split('/').length - 1;
+                el.style.paddingLeft = `${10 + (depth * 15)}px`;
+
+                const icon = item.type === 'tree' ? 'fa-folder' : getFileIcon(item.path);
+                
+                el.innerHTML = `
+                    <div class="tree-icon"><i class="fa-solid ${icon}"></i></div>
+                    <span>${item.path.split('/').pop()}</span>
+                `;
+
+                el.onclick = () => {
+                    if (item.type === 'blob') openFile(item.path);
+                };
+
+                container.appendChild(el);
             });
         }
 
-        // 2. فتح ملف في المحرر
+        function getFileIcon(filename) {
+            if (filename.endsWith('.dart')) return 'fa-file-code';
+            if (filename.endsWith('.yaml')) return 'fa-file-lines';
+            if (filename.endsWith('.html')) return 'fa-html5';
+            if (filename.endsWith('.json')) return 'fa-file-code';
+            if (filename.endsWith('.png')) return 'fa-file-image';
+            return 'fa-file';
+        }
+
+        // --- 4. فتح وحفظ الملفات ---
+
         async function openFile(path) {
-            const data = await githubAPI(`/contents/${path}`);
+            document.getElementById('loader-msg').innerText = "Loading File...";
+            document.getElementById('loader-overlay').style.display = 'flex';
+
+            const data = await apiRequest(`/contents/${path}`);
+            document.getElementById('loader-overlay').style.display = 'none';
+            
             if (!data) return;
 
-            // فك تشفير المحتوى من Base64
+            // فك التشفير مع دعم UTF-8
             const content = new TextDecoder().decode(Uint8Array.from(atob(data.content), c => c.charCodeAt(0)));
             
-            editor.setValue(content, -1); // -1 لتحريك المؤشر للبداية
-            
-            // تحديد لغة المحرر بناءً على الامتداد
-            if (path.endsWith('.dart')) editor.session.setMode("ace/mode/dart");
-            else if (path.endsWith('.yaml')) editor.session.setMode("ace/mode/yaml");
-            else if (path.endsWith('.html')) editor.session.setMode("ace/mode/html");
-            else editor.session.setMode("ace/mode/text");
+            // تحديد اللغة
+            let lang = 'plaintext';
+            if (path.endsWith('.dart')) lang = 'dart';
+            if (path.endsWith('.yaml')) lang = 'yaml';
+            if (path.endsWith('.json')) lang = 'json';
+            if (path.endsWith('.html')) lang = 'html';
 
-            currentFilePath = path;
-            currentFileSha = data.sha; // نحتاج SHA للتحديث
-            document.getElementById('status').innerText = `Editing: ${path}`;
+            monaco.editor.setModelLanguage(editor.getModel(), lang);
+            editor.setValue(content);
+            
+            currentFile = { path: path, sha: data.sha };
+            updateTabs(path);
+            document.getElementById('status-text').innerText = `Editing: ${path}`;
         }
 
-        // 3. حفظ التعديلات
+        function updateTabs(path) {
+            const tabs = document.getElementById('tabs-bar');
+            tabs.innerHTML = `
+                <div class="tab active">
+                    <i class="fa-solid ${getFileIcon(path)}"></i>
+                    <span>${path.split('/').pop()}</span>
+                    <i class="fa-solid fa-xmark tab-close"></i>
+                </div>
+            `;
+        }
+
         async function saveCurrentFile() {
-            if (!currentFilePath) return alert("No file selected!");
-            
+            if (!currentFile.path) return alert("No file open!");
+
             const content = editor.getValue();
-            // تشفير المحتوى إلى Base64
-            const encodedContent = btoa(new TextEncoder().encode(content).reduce((data, byte) => data + String.fromCharCode(byte), ''));
+            // تشفير
+            const encoded = btoa(new TextEncoder().encode(content).reduce((data, byte) => data + String.fromCharCode(byte), ''));
 
             const body = {
-                message: `Update ${currentFilePath} via Web Editor`,
-                content: encodedContent,
-                sha: currentFileSha
+                message: `Update ${currentFile.path} via Aite.studio`,
+                content: encoded,
+                sha: currentFile.sha
             };
 
-            const res = await githubAPI(`/contents/${currentFilePath}`, 'PUT', body);
-            if (res && res.ok) {
+            const res = await apiRequest(`/contents/${currentFile.path}`, 'PUT', body);
+            if (res) {
                 const json = await res.json();
-                currentFileSha = json.content.sha; // تحديث SHA الجديد
-                alert("File Saved Successfully!");
+                currentFile.sha = json.content.sha;
+                // وميض تأكيد الحفظ
+                const btn = document.querySelector('.btn-primary');
+                const originalText = btn.innerHTML;
+                btn.innerHTML = '<i class="fa-solid fa-check"></i> Saved';
+                setTimeout(() => btn.innerHTML = originalText, 2000);
             }
         }
 
-        // 4. إنشاء مشروع جديد (تشغيل الاكشن)
-        async function createNewProject() {
-            if(!confirm("Warning: This will DELETE all current files and create a fresh Flutter project. Continue?")) return;
+        // --- 5. إنشاء ملف جديد ---
+        async function createNewFilePrompt() {
+            const fileName = prompt("Enter file path (e.g. lib/new_screen.dart):");
+            if(!fileName) return;
+
+            const content = "// New File";
+            const encoded = btoa(content);
             
-            // يجب أن يكون اسم ملف الـ workflow دقيقاً
-            // ملاحظة: نفترض أن اسم الملف في المستودع هو auto-generator.yml كما اتفقنا
-            const body = { ref: 'main' }; 
-            const res = await githubAPI(`/actions/workflows/auto-generator.yml/dispatches`, 'POST', body);
-            
-            if (res && res.ok) {
-                alert("Build started! It will take 2-3 minutes. Check GitHub Actions tab or wait and click Rebuild.");
+            const body = {
+                message: `Create ${fileName}`,
+                content: encoded
+            };
+
+            const res = await apiRequest(`/contents/${fileName}`, 'PUT', body);
+            if(res) {
+                await refreshTree(); // تحديث القائمة
+                openFile(fileName); // فتح الملف فوراً
             }
         }
 
-        // 5. إعادة البناء (تشغيل نفس الاكشن)
+        // --- 6. عملية البناء ---
         async function triggerBuild() {
-             // يمكننا تشغيل نفس الاكشن لأنه يقوم بالبناء والنشر
+            const confirmBuild = confirm("Trigger new build? This will verify project files and build Web/Android versions.");
+            if(!confirmBuild) return;
+
+            // اسم ملف الـ workflow يجب أن يطابق الموجود في الريبو
+            const workflowFile = 'flutter_ci.yml'; // تأكد من تسمية الملف في الريبو بهذا الاسم
+            
             const body = { ref: 'main' };
-            const res = await githubAPI(`/actions/workflows/auto-generator.yml/dispatches`, 'POST', body);
-            if (res && res.ok) alert("Rebuild triggered! Wait a few minutes for the update.");
+            const res = await apiRequest(`/actions/workflows/${workflowFile}/dispatches`, 'POST', body);
+            
+            if(res && res.ok) {
+                alert("🚀 Build Started! Changes will appear in a few minutes.\nCheck the Actions tab in GitHub for details.");
+            }
         }
 
-        // 6. تحميل المشروع ZIP
-        function downloadZip() {
-            const owner = document.getElementById('repoOwner').value;
-            const repo = document.getElementById('repoName').value;
-            if (!owner || !repo) return alert("Load repo first!");
-            window.open(`https://github.com/${owner}/${repo}/archive/refs/heads/main.zip`);
-        }
     </script>
 </body>
 </html>
